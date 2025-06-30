@@ -1,53 +1,69 @@
-# ARSW - Conexión con ChatGPT mediante API  
+# ARSW - Conexión con ChatGPT mediante API  y validación de Prompt
 **Autor:** Nicolás Prieto Vargas  
 
 ---
 
-## 📌 Descripción general
-
-Este proyecto permite realizar una conexión entre una aplicación Java de consola y la API de OpenAI (ChatGPT), simulando una conversación entre el usuario y el modelo de lenguaje. Se desarrollaron **dos versiones** del proyecto:
-
-1. **Conexión normal** (conversación directa).
-2. **Conexión con validación del prompt** (mejora del mensaje antes de enviarlo).
+Este proyecto es una aplicación en Spring Boot que permite enviar preguntas a la API de ChatGPT solo si la pregunta tiene sentido o relevancia. Filtra saludos y frases simples, y solo hace la llamada a OpenAI si el mensaje pasa la validación.
 
 ---
 
-## 🔹 Conexión normal
+## 🔹 Conexión con validación
 
-**Ubicación:** raíz del proyecto.
+## 🚀 Flujo de la Aplicación
 
-Este proyecto en Java crea una **aplicación de consola simple** que permite al usuario conversar directamente con ChatGPT usando la API de OpenAI. A través de un ciclo continuo, el usuario escribe preguntas y recibe respuestas generadas por el modelo.  
-La conversación continúa hasta que el usuario escribe `"SALIR"`, momento en el cual el programa finaliza.
-
-### 🧱 Estructura:
-- `App.java`: gestiona la interacción con el usuario.
-- `ChatGptAdapter.java`: realiza la conexión con la API de OpenAI.
-- `IAiAdapter.java`: interfaz que permite intercambiar adaptadores de IA.
-
----
-
-## 🔸 Conexión con validación del prompt
-
-**Ubicación:** carpeta `conexionChatGPTConValidacion/`.
-
-Esta versión permite al usuario escribir un mensaje (prompt), y antes de enviarlo a ChatGPT, el sistema lo evalúa para verificar si tiene sentido. Si no es claro, sugiere una versión mejorada. El usuario puede elegir entre su versión original o la sugerida, y luego se envía el mensaje a ChatGPT, mostrando la respuesta en consola.
-
-### 🧱 Estructura:
-- `App.java`: gestiona la interacción con el usuario y el flujo de validación.
-- `ChatGptAdapter.java`: realiza la conexión con la API de OpenAI.
-- `PromptValidatorAdapter.java`: evalúa y mejora el prompt del usuario.
-- `IAiAdapter.java`: interfaz común para adaptadores de IA.
+1. **El cliente (Postman, frontend, etc.) hace un POST al endpoint `/chat`** con un JSON que contiene el prompt.
+2. **El controlador (`ChatController`) recibe el mensaje** y lo envía al validador.
+3. **El validador (`PromptValidatorAdapter`) revisa si el prompt es una frase vacía o un saludo genérico**.
+4. Si **el prompt no es válido**, se devuelve un mensaje fijo:  
+   `Por favor, escribe una pregunta más específica o relevante.`
+5. Si **el prompt es válido**, se envía a OpenAI mediante el adaptador `ChatGptAdapter`.
+6. **El adaptador hace una llamada HTTP a la API de ChatGPT**, pasando el prompt como contenido.
+7. **Se procesa la respuesta de OpenAI** y se devuelve al cliente.
 
 ---
 
-## 🧩 Patrón de diseño utilizado: Adapter + Interfaz
+## 🧠 Descripción de Componentes
 
-Se aplica el patrón de diseño **Adapter** con una interfaz (`IAiAdapter`) para desacoplar la lógica de negocio de la implementación concreta del proveedor de IA.  
-Esto permite:
-- Reutilizar el código fácilmente con otros servicios (como Gemini o Claude).
-- Mejorar la escalabilidad y el mantenimiento.
-- Cumplir principios SOLID como **inversión de dependencias**.
+### ChatGptApplication
+- Clase principal con `main()`, arranca toda la aplicación Spring Boot.
 
-Cada implementación del adaptador puede conectarse a un proveedor diferente simplemente implementando la interfaz definida.
+### ChatController
+- Controlador REST que expone el endpoint `/chat`.
+- Recibe un mapa con el `prompt`.
+- Usa el `PromptValidatorAdapter` para decidir si se continúa.
+- Si es válido, delega la llamada a `ChatGptAdapter`.
+
+### PromptValidatorAdapter
+- Componente que contiene una lista de frases "vacías" o simples como "hola", "buenos días", etc.
+- Verifica si el `prompt` está vacío o contiene solo esas frases.
+- Si el mensaje **pasa**, permite continuar la ejecución.
+- Si **no pasa**, devuelve un mensaje preventivo sin llamar a la API.
+
+
+### IAiAdapter
+- Interfaz simple con un solo método: `generateResponse(String input)`.
+- Permite desacoplar la lógica de validación de la lógica de consumo de API.
+
+
+### ChatGptAdapter
+- Implementa `IAiAdapter`.
+- Usa `HttpClient` de Java para construir una solicitud HTTP hacia la API de OpenAI.
+- Construye un cuerpo en formato JSON con el modelo y los mensajes.
+- Envía la solicitud con el token (`apiToken`) y endpoint configurado en `application.yml`.
+- Procesa la respuesta:
+  - Si hay error en la respuesta, lo informa.
+  - Si no hay errores, extrae el contenido generado por ChatGPT y lo devuelve.
 
 ---
+
+## 📷 Capturas de pantalla
+
+### ❌ Pregunta no válida
+
+![image](https://github.com/user-attachments/assets/0c0886d5-94b7-48e5-917d-4183cad0fb6b)
+
+### ✅ Pregunta válida
+
+![image](https://github.com/user-attachments/assets/5fb32325-da40-41f4-808c-428a62f5b2f3)
+
+
