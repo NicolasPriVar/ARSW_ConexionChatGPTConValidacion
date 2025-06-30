@@ -56,6 +56,12 @@ Este proyecto es una aplicación en Spring Boot que permite enviar preguntas a l
 
 ---
 
+## 🧬 Diagrama de clases
+![image](https://github.com/user-attachments/assets/746d36de-e615-45c6-a7e8-79edd1b9b532)
+
+
+---
+
 ## 📷 Capturas de pantalla
 
 ### ❌ Pregunta no válida
